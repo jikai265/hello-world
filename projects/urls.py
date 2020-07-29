@@ -14,10 +14,15 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from projects.views import index_page,index_page1,Index#例子1
+from projects.views import index_page, index_page1, Index, IndexPage, ProjectsView, ProjectDetailView  # 例子1
 
 urlpatterns = [
     #path('projects/', index_page1),
-    path('projects/int:pk', index_page),
-    path('projects/', Index.as_view()),#as_view：这个是有view的父类dispatch方法去分发实现的
+    path('projects1/<int:pk>/', Index.as_view()),#可以使用<url类型转化器:路径参数名>; <>是路径转换器，这里一定要传入int类型并且会讲参数赋值给id
+                                               #在DJANGO中还有int、path、uuid、slug等等类型转换器
+    path('projects/', Index.as_view()),# as_view：这个是有view的父类dispatch方法去分发实现的
+    path('IndexPage/', IndexPage.as_view()),
+    path('ProjectsView/', ProjectsView.as_view()),
+    path('ProjectDetailView/<int:pk>/', ProjectDetailView.as_view()),
+
 ]

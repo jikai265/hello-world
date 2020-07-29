@@ -37,7 +37,9 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
     'projects',
+    'interfaces',
     #'projects.apps.ProjectsConfig',
 ]
 
@@ -55,9 +57,13 @@ ROOT_URLCONF = 'Dev04.urls'
 
 TEMPLATES = [
     {
+        # a.指定模板引擎：指的是html是由哪个引擎进行解析
+        # b.常用的模板引擎，DjangoTemplates、Jinja2
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')]
-        ,
+        # c.指定html页面或者html模板存放的路径，可以添加多个路径
+        # d.是Django搜索html页面或者html模板的路径
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        # e.指定子应用下是否有html页面
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,10 +82,19 @@ WSGI_APPLICATION = 'Dev04.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
 
+
+#用数据库之前需要安装mysqlclient库，使Django能够正常和MYSQL通信，Django支持mysql5.7及以上版本
 DATABASES = {
+    # 在Django数据库的标识，如果有多个数据库就添加多个字典用,号分割
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': 'dev04',
+        'USER': 'root',
+        'PASSWORD': '123456',
+        'HOST': 'localhost',
+        'PORT': 3306,
     }
 }
 
@@ -125,3 +140,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# 在全局配置文件settings.py文件中的REST_FRAMEWORK字典里修改DRF框架的配置
+REST_FRAMEWORK = {
+    'NON_FIELD_ERRORS_KEY': 'errors',
+}

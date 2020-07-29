@@ -21,5 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('page/', include('projects.urls')),
     #path('index/', index_page), #例子1
-    #path('index/int:pk', index_page),
+    #path('index/<int:pk>/', index_page),
 ]
