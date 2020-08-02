@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.urls import path
 from projects.views import index_page, index_page1, Index, IndexPage, ProjectsView, ProjectDetailView  # 例子1
+from interfaces.views import interfaceView
 
 urlpatterns = [
     #path('projects/', index_page1),
@@ -24,5 +25,7 @@ urlpatterns = [
     path('IndexPage/', IndexPage.as_view()),
     path('ProjectsView/', ProjectsView.as_view()),
     path('ProjectDetailView/<int:pk>/', ProjectDetailView.as_view()),
+    path('interfaceView/', interfaceView.as_view()),
+    #path('ProjectDetailView/<int:pk>/', ProjectDetailView.as_view()),
 
 ]

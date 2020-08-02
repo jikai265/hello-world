@@ -96,6 +96,16 @@ DATABASES = {
         'HOST': 'localhost',
         'PORT': 3306,
     }
+    # 'default': {
+    #     # 'ENGINE': 'django.db.backends.sqlite3',
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     # 'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+    #     'NAME': 'python_04',
+    #     'USER': 'root',
+    #     'PASSWORD': '123456',
+    #     'HOST': 'localhost',
+    #     'PORT': 3306,
+    # }
 }
 
 

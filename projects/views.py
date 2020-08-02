@@ -5,10 +5,13 @@ import string
 from django.shortcuts import render
 from django.views import View
 from django.http import HttpResponse, JsonResponse
+
+from interfaces.models import Interfaces
 from .models import Projects
 from django.db.models import Q, Count
-from interfaces.models import Interfaces
-
+#from interfaces.models import Interfaces
+from .serializers import ProjectsSerializer, ProjectsModelSerializer
+#from interfaces.serializers import InterfacesModelSerializer
 from django.db import connection  #connection作用：可以在Debug中的watch中添加connection.queries来查看生成的SQL（前提是在DEBUG模式中）
 #  Create your views here.
 
@@ -140,7 +143,7 @@ class Index(View):#View：它的作用就是对请求进行分发
    # 在数据库中随机创建20条数据
     def get(self, request):
           #ascii_letters:大小写字符串，digits：0到9的数字
-          # one_str = string.ascii_letters + string.digits
+          one_str = string.ascii_letters + string.digits
           #
           # for i in range(20):
           #     one_list = [random.choice(one_str) for i in range(5)]
@@ -149,9 +152,12 @@ class Index(View):#View：它的作用就是对请求进行分发
           #         "name": one_str_tmp,
           #         "tester": f"xxx测试0{i}",
           #         "desc": "测试描述",
-          #         "projects_id": random.choice([1, 2, 3])
+          #         #"projects_id": random.choice([1, 2, 3])
+          #         "leader": f"xxx测试0{i}",
+          #         "programmer": f"xxx测试0{i}"
           #     }
-          #     one_obj = Interfaces.objects.create(**one_dict)
+          #one_obj = Interfaces.objects.create(**one_dict)
+          #one_obj = Projects.objects.create(**one_dict)
           Projects.objects.all()
           return HttpResponse("创建成功！")
 
@@ -540,11 +546,19 @@ class IndexPage(View):
 """
 from .serializers import ProjectsSerializer
 
-ret = {
-        "msg": "",
-        "code": 0
-}
+# ret = {
+#         "msg": "",
+#         "code": 0
+# }
 
+
+# 序列化器对象中的几个重要属性
+# 一、一定要先执行.is_valid()方法之后才能访问
+# .errors 获取报错信息
+# .validated_data 校验通过之后的数据（往往也是数据库中需要保存的数据）
+
+# 二、可以不用调用.is_valid()方法，也能访问
+# .data 最终返回给前端的数据
 
 class ProjectsView(View):
     """
@@ -561,7 +575,7 @@ class ProjectsView(View):
     """
     def get(self, request):
         # a.从数据库中获取所有的项目信息(查询集)
-        qs = Projects.objects.all()
+        #qs = Projects.objects.all()
 
         # b.需要将模型类对象（查询集）转化为嵌套字典的列表
         # python_data = []
@@ -583,11 +597,21 @@ class ProjectsView(View):
         # b.instance参数可以传查询集（多条记录），many=True
         # c.可以ProjectsSerializer序列化器对象，调用data属性，可以将模型类对象转化为Python中的数据类型
         # d.如果未传递many=True参数，那么序列化器对象.data，返回字典，否则返回一个嵌套字典的列表（也就是返回多条数据）
-        serializer_obj = ProjectsSerializer(instance=qs, many=True)
+        #serializer_obj = ProjectsSerializer(instance=qs, many=True)
+        #***********
+        #使用序列化器类来生成序列化字段
+        qs = Projects.objects.all()
+        serializer_obj = ProjectsModelSerializer(instance=qs, many=True)
+        #serializer_obj = ProjectsModelSerializer()
         # c.向前端返回json格式的数据
         return JsonResponse(serializer_obj.data, status=200, safe=False)
 
     def post(self, request):
+        ret = {
+            "msg": "",
+            "code": 0
+        }
+
         # a.获取新的项目信息并转化为python中数据类型（字典或者嵌套字典的列表）
         request_data = request.body
         try:
@@ -614,7 +638,11 @@ class ProjectsView(View):
         # c.调用序列化器对象.is_valid()方法，如果校验成功，返回True，否则返回False
         # d.必须调用is_valid()方法之后，才能使用.errors属性去获取报错信息，相当于一个字典
         # e.必须调用is_valid()方法之后，才能使用.validated_data属性去获取校验通过信息，相当于一个字典
-        serializer_obj1 = ProjectsSerializer(data=python_data)
+
+        # 在定义序列化器对象时，只给data传参
+        #a,使用序列化器对象save()，会自动调用序列化器类中的create方法
+        #serializer_obj1 = ProjectsSerializer(data=python_data)
+        serializer_obj1 = ProjectsModelSerializer(data=python_data)
         try:
             serializer_obj1.is_valid(raise_exception=True)  #raise_exception=True：校验失败后抛出异常
         except Exception as e:
@@ -629,7 +657,7 @@ class ProjectsView(View):
 
         # c.创建项目
         #obj = Projects.objects.create(**ret)
-        obj=Projects.objects.create(**serializer_obj1.validated_data) #validated_data属性用来获取校验通过信息，相当于一个字典
+        #obj=Projects.objects.create(**serializer_obj1.validated_data) #validated_data属性用来获取校验通过信息，相当于一个字典
 
         # d.向前端返回json格式的数据
         # python_dict = {
@@ -642,12 +670,16 @@ class ProjectsView(View):
         #     'msg': '创建成功'
         # }
         #serializer_obj1 = ProjectsSerializer(instance=obj)
+        # 在调用save方法时，传递的关键字参数，会自动添加到create()方法，validated_data字典中
+        serializer_obj1.save()
+
         ret['msg'] = '成功'
-        ret.update(serializer_obj1.validated_data)
+        #ret.update(serializer_obj1.validated_data)
+        ret.update(serializer_obj1.data)   #最终返回给前端的数据
 
         # c.向前端返回json格式的数据
-        return JsonResponse(serializer_obj1.data, status=201)
-        #return JsonResponse(ret, status=201)
+        #return JsonResponse(serializer_obj1.data, status=201)
+        return JsonResponse(ret, status=201)
 
 
 class ProjectDetailView(View):
@@ -667,8 +699,8 @@ class ProjectDetailView(View):
         url: /projects/<int:pk>/
         method：DELETE
     """
-    def get(self, request, pk):
-        # a.校验参数
+
+    def get_object(self, pk):  #提取查询记录的方法
         try:
             obj = Projects.objects.get(id=pk)
         except Exception as e:
@@ -677,7 +709,20 @@ class ProjectDetailView(View):
                 "code": 0
             }
             return JsonResponse(result, status=400)
+        return obj
 
+
+    def get(self, request, pk):
+        # a.校验参数
+        # try:
+        #     obj = Projects.objects.get(id=pk)
+        # except Exception as e:
+        #     result = {
+        #         "msg": "参数有误",
+        #         "code": 0
+        #     }
+        #     return JsonResponse(result, status=400)
+        obj=self.get_object(pk)
         # b.从数据库中获取模型类对象数据-旧
         # python_dict = {
         #     'id': obj.id,
@@ -688,23 +733,29 @@ class ProjectDetailView(View):
         #     'msg': '获取成功'
         # }
         #serializer_obj：序列化器类对象
-        serializer_obj = ProjectsSerializer(instance=obj)  #优化过后
-        python_dict = serializer_obj.data  #返回的是字典（一条数据）
+        #serializer_obj = ProjectsSerializer(instance=obj)  #优化过后
+        serializer_obj = ProjectsModelSerializer(instance=obj)  # 使用模型序列化类实现
+        #python_dict = serializer_obj.data  #返回的是字典（一条数据）
 
         # c.向前端返回json格式的数据
-        return JsonResponse(python_dict)
+        return JsonResponse(serializer_obj.data)
 
     def put(self, request, pk):
-        # a.校验pk值并获取待更新的模型类对象
-        try:
-            obj = Projects.objects.get(id=pk)
-        except Exception as e:
-            result = {
-                "msg": "参数有误",
-                "code": 0
-            }
-            return JsonResponse(result, status=400)
+        ret = {
+            "msg": "",
+            "code": 0
+        }
 
+        # a.校验pk值并获取待更新的模型类对象
+        # try:
+        #     obj = Projects.objects.get(id=pk)
+        # except Exception as e:
+        #     result = {
+        #         "msg": "参数有误",
+        #         "code": 0
+        #     }
+        #     return JsonResponse(result, status=400)
+        obj=self.get_object(pk)
         # b.获取新的项目信息并校验
         request_data = request.body
         try:
@@ -716,20 +767,33 @@ class ProjectDetailView(View):
             }
             return JsonResponse(result, status=400)
 
-        if ('name' not in python_data) or ('leader' not in python_data):
-            result = {
-                "msg": "参数有误",
-                "code": 0
-            }
-            return JsonResponse(result, status=400)
+        # if ('name' not in python_data) or ('leader' not in python_data):
+        #     result = {
+        #         "msg": "参数有误",
+        #         "code": 0
+        #     }
+        #    return JsonResponse(result, status=400)
+
+
+        # 如果在定义序列化器对象时，同时指定instance和data参数
+        # a.调用序列化器对象.save()方法，会自动调用序列化器类中的update方法
+        #serializer_obj1 = ProjectsSerializer(instance=obj, data=python_data)
+        serializer_obj1 = ProjectsModelSerializer(instance=obj, data=python_data)
+        try:
+            serializer_obj1.is_valid(raise_exception=True)
+        except Exception as e:
+            ret['msg'] = '参数有误'
+            ret.update(serializer_obj1.errors)
+            return JsonResponse(ret, status=400)
 
         # c.更新操作1
-        obj.name = python_data.get('name') or obj.name
-        obj.leader = python_data.get('leader') or obj.leader
-        obj.tester = python_data.get('tester') or obj.tester
-        obj.programmer = python_data.get('programmer') or obj.programmer
-        obj.desc = python_data.get('desc') or obj.desc
-        obj.save()
+        # obj.name = serializer_obj1.validated_data.get('name') or obj.name  ,校验之后的数据更新
+        # obj.name = python_data.get('name') or obj.name  ,校验之前的数据更新
+        # obj.leader = python_data.get('leader') or obj.leader
+        # obj.tester = python_data.get('tester') or obj.tester
+        # obj.programmer = python_data.get('programmer') or obj.programmer
+        # obj.desc = python_data.get('desc') or obj.desc
+        # obj.save()
 
         # Projects.objects.filter(id=pk).update(**python_data) #更新操作2
         # d.向前端返回json格式的数据
@@ -741,21 +805,26 @@ class ProjectDetailView(View):
         #     'code': 1,
         #     'msg': '更新成功'
         # }
-        serializer_obj = ProjectsSerializer(instance=obj)
+        serializer_obj1.save()  #这一步会自动调用序列化器类中的create方法
+        #serializer_obj1.save(user="清风")  # 这一步会是清风创建的
+        #serializer_obj = ProjectsSerializer(instance=obj)
+
+
         # c.向前端返回json格式的数据
-        return JsonResponse(serializer_obj.data, status=201)
+        return JsonResponse(serializer_obj1.data, status=201)
+
 
     def delete(self, request, pk):
         # a.校验pk值并获取待删除的模型类对象
-        try:
-            obj = Projects.objects.get(id=pk)
-        except Exception as e:
-            result = {
-                "msg": "参数有误",
-                "code": 0
-            }
-            return JsonResponse(result, status=400)
-
+        # try:
+        #     obj = Projects.objects.get(id=pk)
+        # except Exception as e:
+        #     result = {
+        #         "msg": "参数有误",
+        #         "code": 0
+        #     }
+        #     return JsonResponse(result, status=400)
+        obj = self.get_object(pk)
         obj.delete()
 
         python_data = {

@@ -11,8 +11,8 @@ class Interfaces(models.Model):
     # 3、第二个参数为必传参数on_delete，指定父表记录被删除之后，子表中对应的记录的处理方式
     # 4、models.CASCADE：父表记录被删，子表自动删
     # 5、models.SET_NULL, null=True：父表记录被删，子表自动设置为null
-    #projects就是外键字段，一般外键选择的是父表中的模型类以小写形式存在，迁移后生成的是projects_id，对应的是父表中的id，也就是对应的是主键
-    projects = models.ForeignKey('projects.Projects', on_delete=models.CASCADE, verbose_name='所属项目', help_text='所属项目')
+    #projects就是外键字段，一般外键选择的是父表中的模型类以小写形式存在，迁移后生成的是projects_id，对应的是父表中的id，也就是对应的是主键，related_name指定父表获取子表的属性名，例如在Projects/Serializer.py中的interfaces_set名称就可以通过related_name重新定义
+    projects = models.ForeignKey('projects.Projects', on_delete=models.CASCADE, verbose_name='所属项目', help_text='所属项目', related_name='interfaces')
     tester = models.CharField(verbose_name='测试人员', max_length=50, help_text='测试人员')
     desc = models.CharField(verbose_name='简要描述', max_length=200, null=True, blank=True, help_text='简要描述')
 
@@ -24,3 +24,4 @@ class Interfaces(models.Model):
 
     def __str__(self):
         return self.name
+

@@ -19,7 +19,7 @@ from django.urls import path,include #访问子路由地址时，必须在主路
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('page/', include('projects.urls')),
+    path('', include('projects.urls')),
     #path('index/', index_page), #例子1
     #path('index/<int:pk>/', index_page),
 ]

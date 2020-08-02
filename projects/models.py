@@ -27,7 +27,7 @@ class Projects(models.Model):  #模型类
     # 8、CharField -> varchar
     # IntegerField -> int
     # TextField -> text
-    id = models.AutoField(primary_key=True)
+    #id = models.AutoField(primary_key=True)
     # 9、verbose_name：为个性化信息，相当于给这个字段添加一个中文提示
     # 10、help_text：帮助文本信息，说明字段的含义，在api接口文档平台和admin后端站点中会用于提示，往往跟verbose_name一致
     # 11、unique：在表中这个字段的值是否唯一，在数据库中就是唯一约束，一般是设置手机号码/邮箱等，默认为False
@@ -60,4 +60,5 @@ class Projects(models.Model):  #模型类
         verbose_name = '项目表'
 
     def __str__(self):  #在我们打印返回数据的时候自动返回字符串
-        return f"<{self.name}>"  #将项目的名称作为返回值
+        return f"{self.name}" #将项目的名称作为返回值
+        #return f"{self.desc}"
